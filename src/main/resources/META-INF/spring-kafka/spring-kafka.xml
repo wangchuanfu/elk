@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int-kafka="http://www.springframework.org/schema/integration/kafka"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+       http://www.springframework.org/schema/integration
+       http://www.springframework.org/schema/integration/spring-integration-4.1.xsd
+       http://www.springframework.org/schema/integration/kafka
+       http://www.springframework.org/schema/integration/kafka/spring-integration-kafka.xsd
+       ">
+
+    <!--kafka config-->
+    <int:channel id="inputToKafka"/>
+
+    <int-kafka:outbound-channel-adapter kafka-producer-context-ref="kafkaProducerContext"
+                                        auto-startup="true"
+                                        channel="inputToKafka"
+                                        order="1">
+    </int-kafka:outbound-channel-adapter>
+
+    <bean id="producerProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="properties">
+            <props>
+                <prop key="topic.metadata.refresh.interval.ms">3600000</prop>
+                <prop key="message.send.max.retries">5</prop>
+                <prop key="send.buffer.bytes">5242880</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="stringSerializer" class="org.apache.kafka.common.serialization.StringSerializer"/>
+
+    <int-kafka:producer-context id="kafkaProducerContext" producer-properties="producerProperties">
+        <int-kafka:producer-configurations>
+
+            <int-kafka:producer-configuration broker-list="localhost:9092"
+                                              key-serializer="stringSerializer"
+                                              value-class-type="java.lang.String"
+                                              value-serializer="stringSerializer"
+                                              topic="mylog_topic"/>
+
+        </int-kafka:producer-configurations>
+    </int-kafka:producer-context>
+</beans>
